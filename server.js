@@ -5,15 +5,10 @@ import cors from "cors";
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Reemplaza con la IP local de tu ESP32
+// Reemplaza con la URL de tu túnel Localtunnel
 const ESP32_IP = "http://myesp32.loca.lt";
 
-// Permitir CORS desde el dominio de tu frontend en Netlify
-app.use(
-  cors({
-    origin: "https://esp32-led.netlify.app", // Reemplaza con tu dominio de Netlify
-  })
-);
+app.use(cors()); // Habilitar CORS para todas las rutas
 
 app.get("/api/led/:state", async (req, res) => {
   const state = req.params.state;
