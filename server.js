@@ -4,7 +4,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Reemplaza con la IP local de tu ESP32
-const ESP32_IP = "http://192.168.1.91";
+const ESP32_IP = "http://192.168.1.45";
 
 app.get("/api/led/:state", async (req, res) => {
   const state = req.params.state;
