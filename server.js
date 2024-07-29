@@ -89,23 +89,61 @@ app.listen(3000, () => {
 });
  */
 
-import express from "express";
-/* const bodyParser = require("body-parser"); */
+/* import express from "express";
+
 import bodyParser from "body-parser";
 import mqtt from "mqtt";
-/* const mqtt = require("mqtt"); */
+
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Configuración del broker MQTT
+
 const MQTT_SERVER = "mqtt://192.168.1.100";
 const MQTT_TOPIC = "esp32/led";
 
-// Configuración de Express
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Conexión al broker MQTT
+
+const client = mqtt.connect(MQTT_SERVER);
+
+client.on("connect", () => {
+  console.log("Connected to MQTT broker");
+});
+
+app.post("/api/led/:state", (req, res) => {
+  const ledState = req.params.state;
+  console.log(`Received request to turn ${ledState} the LED`);
+  client.publish(MQTT_TOPIC, ledState, (err) => {
+    if (err) {
+      console.error("Error publishing message:", err);
+      return res.status(500).send("Error communicating with ESP32");
+    }
+    res.status(200).send(`LED is turned ${ledState}`);
+  });
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
+ */
+
+import express from "express";
+import bodyParser from "body-parser";
+import mqtt from "mqtt";
+import cors from "cors";
+const app = express();
+
+const port = process.env.PORT || 3000;
+
+const MQTT_SERVER = "mqtt://192.168.1.100"; // Cambia a la dirección IP de tu servidor MQTT
+const MQTT_TOPIC = "esp32/led";
+
+app.use(cors());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
 const client = mqtt.connect(MQTT_SERVER);
 
 client.on("connect", () => {
