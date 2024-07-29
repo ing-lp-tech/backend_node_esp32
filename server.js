@@ -135,7 +135,7 @@ import mqtt from "mqtt";
 import cors from "cors";
 const app = express();
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 10000;
 
 const MQTT_SERVER = "mqtt://192.168.1.100"; // Cambia a la dirección IP de tu servidor MQTT
 const MQTT_TOPIC = "esp32/led";
