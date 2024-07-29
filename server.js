@@ -1,33 +1,43 @@
-import express from "express";
+/* import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Reemplaza con la URL de tu túnel Localtunnel
-const ESP32_IP = "http://myesp32.loca.lt";
+const ESP32_IP = '"http://myesp32.loca.lt"'; // Asegúrate de reemplazar esto con la URL correcta
 
 app.use(cors()); // Habilitar CORS para todas las rutas
 
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-Requested-With,content-type"
+  );
+  res.setHeader("Access-Control-Allow-Credentials", true);
+  next();
+});
+
 app.get("/api/led/:state", async (req, res) => {
   const state = req.params.state;
-  console.log(`Received request to turn ${state} the LED`);
+  let url = `${ESP32_IP}/?led=${state}`;
 
   try {
-    const response = await fetch(`${ESP32_IP}/?led=${state}`);
-    const text = await response.text();
-    console.log(`Response from ESP32: ${text}`);
-    res.send(text);
+    console.log(`Sending request to ESP32: ${url}`);
+    const response = await fetch(url);
+    const data = await response.text();
+    console.log(`Response from ESP32: ${response.status}`);
+    res.send(`ESP32 responded with: ${data}`);
   } catch (error) {
-    console.error("Error communicating with ESP32:", error.message);
-    res.status(500).send("Error communicating with ESP32: " + error.message);
+    console.error("Error communicating with ESP32:", error);
+    res.status(500).send("Error communicating with ESP32");
   }
-});
-
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
+}); */
 
 /* import express from "express";
 import fetch from "node-fetch";
@@ -78,3 +88,42 @@ app.listen(3000, () => {
   console.log("Server is running on port 3000");
 });
  */
+
+import express from "express";
+/* const bodyParser = require("body-parser"); */
+import bodyParser from "body-parser";
+import mqtt from "mqtt";
+/* const mqtt = require("mqtt"); */
+const app = express();
+const port = process.env.PORT || 3000;
+
+// Configuración del broker MQTT
+const MQTT_SERVER = "mqtt://192.168.1.100";
+const MQTT_TOPIC = "esp32/led";
+
+// Configuración de Express
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Conexión al broker MQTT
+const client = mqtt.connect(MQTT_SERVER);
+
+client.on("connect", () => {
+  console.log("Connected to MQTT broker");
+});
+
+app.post("/api/led/:state", (req, res) => {
+  const ledState = req.params.state;
+  console.log(`Received request to turn ${ledState} the LED`);
+  client.publish(MQTT_TOPIC, ledState, (err) => {
+    if (err) {
+      console.error("Error publishing message:", err);
+      return res.status(500).send("Error communicating with ESP32");
+    }
+    res.status(200).send(`LED is turned ${ledState}`);
+  });
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
