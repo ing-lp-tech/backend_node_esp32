@@ -134,14 +134,14 @@ app.listen(port, () => {
 import express from "express";
 import cors from "cors";
 import http from "http";
-import { WebSocketServer } from "ws"; // Usa import para WebSocketServer
+import { WebSocketServer } from "ws";
 
 // Crear una aplicación Express
 const app = express();
 
 // Configuración del servidor HTTP
 const server = http.createServer(app);
-const wss = new WebSocketServer({ server }); // Usa WebSocketServer en lugar de WebSocket.Server
+const wss = new WebSocketServer({ server });
 
 // Middleware
 app.use(cors());
@@ -153,12 +153,15 @@ let wsClient = null;
 app.post("/api/led/:state", (req, res) => {
   try {
     const state = req.params.state;
+    console.log(`Recibida solicitud para cambiar estado del LED a: ${state}`);
+
     if (wsClient) {
       wsClient.send(state === "on" ? "1" : "0");
-      res.send(`LED is turned ${state}`);
-      console.log(`Solicitud recibida: LED is turned ${state}`);
+      res.status(200).send(`LED is turned ${state}`);
+      console.log(`Solicitud exitosa: LED is turned ${state}`);
     } else {
-      throw new Error("WebSocket connection not established");
+      console.error("WebSocket client not connected");
+      res.status(500).send("WebSocket connection not established");
     }
   } catch (error) {
     res.status(500).send(error.message);
@@ -171,6 +174,10 @@ wss.on("connection", (ws) => {
   wsClient = ws;
   console.log("WebSocket connection established");
 
+  ws.on("message", (message) => {
+    console.log(`Mensaje recibido del ESP32: ${message}`);
+  });
+
   ws.on("close", () => {
     wsClient = null;
     console.log("WebSocket connection closed");
@@ -182,7 +189,7 @@ wss.on("connection", (ws) => {
 });
 
 // Inicio del servidor
-const PORT = process.env.PORT || 10000; // Usar el puerto asignado por Render
+const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
