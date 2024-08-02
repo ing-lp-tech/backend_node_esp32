@@ -136,7 +136,7 @@ import cors from "cors";
 import http from "http";
 import { WebSocketServer } from "ws"; // Usa import para WebSocketServer
 
-// Crea una aplicación Express
+// Crear una aplicación Express
 const app = express();
 
 // Configuración del servidor HTTP
@@ -151,14 +151,18 @@ let wsClient = null;
 
 // Endpoint para encender/apagar el LED
 app.post("/api/led/:state", (req, res) => {
-  const state = req.params.state;
-  if (wsClient) {
-    wsClient.send(state === "on" ? "1" : "0");
-    res.send(`LED is turned ${state}`);
-    console.log(`Solicitud recibida: LED is turned ${state}`);
-  } else {
-    res.status(500).send("WebSocket connection not established");
-    console.error("WebSocket connection not established");
+  try {
+    const state = req.params.state;
+    if (wsClient) {
+      wsClient.send(state === "on" ? "1" : "0");
+      res.send(`LED is turned ${state}`);
+      console.log(`Solicitud recibida: LED is turned ${state}`);
+    } else {
+      throw new Error("WebSocket connection not established");
+    }
+  } catch (error) {
+    res.status(500).send(error.message);
+    console.error("Error en el servidor:", error);
   }
 });
 
@@ -178,7 +182,7 @@ wss.on("connection", (ws) => {
 });
 
 // Inicio del servidor
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000; // Usar el puerto asignado por Render
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
