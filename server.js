@@ -129,39 +129,56 @@ app.listen(port, () => {
 });
  */
 
+// server.js
+
 import express from "express";
-import bodyParser from "body-parser";
-import mqtt from "mqtt";
 import cors from "cors";
+import http from "http";
+import { WebSocketServer } from "ws"; // Usa import para WebSocketServer
+
+// Crea una aplicación Express
 const app = express();
 
-const port = process.env.PORT || 10000;
+// Configuración del servidor HTTP
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server }); // Usa WebSocketServer en lugar de WebSocket.Server
 
-const MQTT_SERVER = "mqtt://192.168.1.100"; // Cambia a la dirección IP de tu servidor MQTT
-const MQTT_TOPIC = "esp32/led";
-
+// Middleware
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
 
-const client = mqtt.connect(MQTT_SERVER);
+let wsClient = null;
 
-client.on("connect", () => {
-  console.log("Connected to MQTT broker");
+// Endpoint para encender/apagar el LED
+app.post("/api/led/:state", (req, res) => {
+  const state = req.params.state;
+  if (wsClient) {
+    wsClient.send(state === "on" ? "1" : "0");
+    res.send(`LED is turned ${state}`);
+    console.log(`Solicitud recibida: LED is turned ${state}`);
+  } else {
+    res.status(500).send("WebSocket connection not established");
+    console.error("WebSocket connection not established");
+  }
 });
 
-app.post("/api/led/:state", (req, res) => {
-  const ledState = req.params.state;
-  console.log(`Received request to turn ${ledState} the LED`);
-  client.publish(MQTT_TOPIC, ledState, (err) => {
-    if (err) {
-      console.error("Error publishing message:", err);
-      return res.status(500).send("Error communicating with ESP32");
-    }
-    res.status(200).send(`LED is turned ${ledState}`);
+// Configuración del WebSocket
+wss.on("connection", (ws) => {
+  wsClient = ws;
+  console.log("WebSocket connection established");
+
+  ws.on("close", () => {
+    wsClient = null;
+    console.log("WebSocket connection closed");
+  });
+
+  ws.on("error", (error) => {
+    console.error("WebSocket error:", error);
   });
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+// Inicio del servidor
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
