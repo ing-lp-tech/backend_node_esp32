@@ -1,178 +1,35 @@
-/* import express from "express";
-import fetch from "node-fetch";
-import cors from "cors";
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-const ESP32_IP = '"http://myesp32.loca.lt"'; // Asegúrate de reemplazar esto con la URL correcta
-
-app.use(cors()); // Habilitar CORS para todas las rutas
-
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "X-Requested-With,content-type"
-  );
-  res.setHeader("Access-Control-Allow-Credentials", true);
-  next();
-});
-
-app.get("/api/led/:state", async (req, res) => {
-  const state = req.params.state;
-  let url = `${ESP32_IP}/?led=${state}`;
-
-  try {
-    console.log(`Sending request to ESP32: ${url}`);
-    const response = await fetch(url);
-    const data = await response.text();
-    console.log(`Response from ESP32: ${response.status}`);
-    res.send(`ESP32 responded with: ${data}`);
-  } catch (error) {
-    console.error("Error communicating with ESP32:", error);
-    res.status(500).send("Error communicating with ESP32");
-  }
-}); */
-
-/* import express from "express";
-import fetch from "node-fetch";
-
-const app = express();
-//const ESP32_IP = "http://192.168.1.45";  // Reemplaza con la IP de tu ESP32
-const ESP32_IP = "http://192.168.0.91";
-
-app.use(express.json());
-
-app.get("/api/led/:state", async (req, res) => {
-  const state = req.params.state;
-  try {
-    const response = await fetch(`${ESP32_IP}/?led=${state}`);
-    const data = await response.text();
-    res.send(data);
-  } catch (error) {
-    res.status(500).send("Error controlling LED");
-  }
-});
-
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
-}); */
-
-/* const express = require("express");
-const app = express();
-const fetch = require("node-fetch"); */
-
-/* const ESP32_IP = "http://192.168.1.45"; */ // Reemplaza con la IP de tu ESP32
-
-/* const ESP32_IP = "http://192.168.0.89";
-
-app.use(express.json());
-
-app.get("/api/led/:state", async (req, res) => {
-  const state = req.params.state;
-  try {
-    const response = await fetch(`${ESP32_IP}/?led=${state}`);
-    const data = await response.text();
-    res.send(data);
-  } catch (error) {
-    res.status(500).send("Error controlling LED");
-  }
-});
-
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
-});
- */
-
-/* import express from "express";
-
-import bodyParser from "body-parser";
-import mqtt from "mqtt";
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-
-const MQTT_SERVER = "mqtt://192.168.1.100";
-const MQTT_TOPIC = "esp32/led";
-
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-
-const client = mqtt.connect(MQTT_SERVER);
-
-client.on("connect", () => {
-  console.log("Connected to MQTT broker");
-});
-
-app.post("/api/led/:state", (req, res) => {
-  const ledState = req.params.state;
-  console.log(`Received request to turn ${ledState} the LED`);
-  client.publish(MQTT_TOPIC, ledState, (err) => {
-    if (err) {
-      console.error("Error publishing message:", err);
-      return res.status(500).send("Error communicating with ESP32");
-    }
-    res.status(200).send(`LED is turned ${ledState}`);
-  });
-});
-
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
- */
-
-// server.js
-
 import express from "express";
 import cors from "cors";
 import http from "http";
 import { WebSocketServer } from "ws";
 
-// Crear una aplicación Express
 const app = express();
-
-// Configuración del servidor HTTP
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
 let wsClient = null;
 
-// Endpoint para encender/apagar el LED
 app.post("/api/led/:state", (req, res) => {
-  try {
-    const state = req.params.state;
-    console.log(`Recibida solicitud para cambiar estado del LED a: ${state}`);
+  const state = req.params.state;
+  console.log(`Solicitud para cambiar estado del LED a: ${state}`);
 
-    if (wsClient) {
-      wsClient.send(state === "on" ? "1" : "0");
-      res.status(200).send(`LED is turned ${state}`);
-      console.log(`Solicitud exitosa: LED is turned ${state}`);
-    } else {
-      console.error("WebSocket client not connected");
-      res.status(500).send("WebSocket connection not established");
-    }
-  } catch (error) {
-    res.status(500).send(error.message);
-    console.error("Error en el servidor:", error);
+  if (wsClient) {
+    const message = state === "on" ? "1" : "0";
+    wsClient.send(message);
+    res.status(200).send(`LED is turned ${state}`);
+    console.log(`Mensaje enviado al ESP32: ${message}`);
+  } else {
+    res.status(500).send("WebSocket connection not established");
+    console.error("WebSocket connection not established");
   }
 });
 
-// Configuración del WebSocket
 wss.on("connection", (ws) => {
   wsClient = ws;
-  console.log("WebSocket connection established");
+  console.log("Conexión WebSocket establecida");
 
   ws.on("message", (message) => {
     console.log(`Mensaje recibido del ESP32: ${message}`);
@@ -180,7 +37,7 @@ wss.on("connection", (ws) => {
 
   ws.on("close", () => {
     wsClient = null;
-    console.log("WebSocket connection closed");
+    console.log("Conexión WebSocket cerrada");
   });
 
   ws.on("error", (error) => {
@@ -188,8 +45,7 @@ wss.on("connection", (ws) => {
   });
 });
 
-// Inicio del servidor
-const PORT = process.env.PORT || 10000;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+const PORT = 3000;
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
