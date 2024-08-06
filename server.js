@@ -18,7 +18,7 @@ app.post("/api/led/:state", (req, res) => {
 
   if (wsClient) {
     const message = state === "on" ? "1" : "0";
-    wsClient.send(message);
+    wsClient.send(message); // Envía el comando al ESP32
     res.status(200).send(`LED is turned ${state}`);
     console.log(`Mensaje enviado al ESP32: ${message}`);
   } else {
@@ -45,7 +45,7 @@ wss.on("connection", (ws) => {
   });
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 10000;
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
