@@ -51,7 +51,7 @@ wss.on("connection", (ws) => {
 });
 
 // Usar el puerto proporcionado por Render
-const PORT = process.env.PORT || 10000; // Asegúrate de que este puerto esté abierto y disponible
+const PORT = process.env.PORT || 80; // Asegúrate de que este puerto esté abierto y disponible
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
